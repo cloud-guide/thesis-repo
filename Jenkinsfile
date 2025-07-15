@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/cloud-guide/thesis-repo.git'
-            }
-        }
+       stage('Clone Repo') {
+    steps {
+        git branch: 'main', url: 'https://github.com/cloud-guide/thesis-repo.git'
+    }
+}
+
         stage('Build') {
             steps {
                 echo 'Building the application...'
