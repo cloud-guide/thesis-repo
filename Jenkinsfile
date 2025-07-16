@@ -1,29 +1,43 @@
 pipeline {
     agent any
-
     stages {
-       stage('Clone Repo') {
-    steps {
-        git branch: 'main', url: 'https://github.com/cloud-guide/thesis-repo.git'
-    }
-}
-
-        stage('Build') {
+        stage('Start Timer') {
             steps {
-                echo 'Building the application...'
-                sleep 10
+                script {
+                    startTime = System.currentTimeMillis()
+                }
             }
         }
-        stage('Test') {
+        stage('Deploy Scenario A') {
             steps {
-                echo 'Running tests...'
-                sleep 5
+                sh 'kubectl apply -f scenarios/scenario-a.yaml'
             }
         }
-        stage('Deploy') {
+        stage('Wait for Pod to be Running') {
             steps {
-                echo 'Deploying to test environment...'
-                sleep 5
+                script {
+                    timeout(time: 60, unit: 'SECONDS') {
+                        waitUntil {
+                            def status = sh(script: "kubectl get pod scenario-a -n monitoring -o jsonpath='{.status.phase}'", returnStdout: true).trim()
+                            return status == "Running"
+                        }
+                    }
+                }
+            }
+        }
+        stage('Check for Restarts') {
+            steps {
+                sh 'kubectl describe pod scenario-a -n monitoring > pod-status.txt'
+                archiveArtifacts artifacts: 'pod-status.txt'
+            }
+        }
+        stage('End Timer & Log') {
+            steps {
+                script {
+                    endTime = System.currentTimeMillis()
+                    duration = (endTime - startTime) / 1000
+                    echo "Pipeline Execution Time: ${duration} seconds"
+                }
             }
         }
     }
