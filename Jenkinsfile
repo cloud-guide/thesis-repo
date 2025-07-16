@@ -32,9 +32,32 @@ pipeline {
             }
         }
 
+        stage('Measure Pod Startup Time') {
+            steps {
+                script {
+                    def podJson = sh(script: 'kubectl get pod scenario-a -n monitoring -o json', returnStdout: true).trim()
+                    def pod = readJSON text: podJson
+
+                    def scheduledTime = pod.status.startTime
+                    def containerStartTime = pod.status.containerStatuses[0].state.running.startedAt
+
+                    def startupMillis = java.time.Instant.parse(containerStartTime).toEpochMilli() - java.time.Instant.parse(scheduledTime).toEpochMilli()
+                    def startupSeconds = startupMillis / 1000
+
+                    echo "🚀 Pod Startup Time: ${startupSeconds} seconds"
+                }
+            }
+        }
+
         stage('Check Restarts') {
             steps {
-                sh 'kubectl get pod scenario-a -n monitoring -o jsonpath="{.status.containerStatuses[0].restartCount}"'
+                script {
+                    def restarts = sh(
+                        script: 'kubectl get pod scenario-a -n monitoring -o jsonpath="{.status.containerStatuses[0].restartCount}"',
+                        returnStdout: true
+                    ).trim()
+                    echo "🔁 Pod Restart Count: ${restarts}"
+                }
             }
         }
 
@@ -43,7 +66,7 @@ pipeline {
                 script {
                     END_TIME = System.currentTimeMillis().toString()
                     def durationSeconds = (END_TIME.toLong() - START_TIME.toLong()) / 1000
-                    echo "⏱ Scenario A Total Time: ${durationSeconds} seconds"
+                    echo "⏱ Scenario A Total Pipeline Time: ${durationSeconds} seconds"
                 }
             }
         }
