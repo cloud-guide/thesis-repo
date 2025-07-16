@@ -42,7 +42,7 @@ pipeline {
             steps {
                 script {
                     END_TIME = System.currentTimeMillis()
-                    def durationSeconds = (END_TIME.toLong() - START_TIME.toLong()) / 1000
+                    def durationSeconds = (END_TIME as Long - START_TIME as Long) / 1000
                     echo "⏱ Scenario A Total Time: ${durationSeconds} seconds"
                 }
             }
