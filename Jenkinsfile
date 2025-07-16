@@ -1,43 +1,49 @@
 pipeline {
     agent any
+
+    environment {
+        START_TIME = ''
+        END_TIME = ''
+    }
+
     stages {
         stage('Start Timer') {
             steps {
                 script {
-                    startTime = System.currentTimeMillis()
+                    START_TIME = System.currentTimeMillis()
                 }
             }
         }
-stage('Deploy Scenario A') {
-    steps {
-        echo 'Run the following command manually:'
-        echo 'kubectl apply -f scenarios/scenario-a.yaml'
-    }
-}
-        stage('Wait for Pod to be Running') {
+
+        stage('Deploy Scenario A') {
             steps {
-                script {
-                    timeout(time: 60, unit: 'SECONDS') {
-                        waitUntil {
-                            def status = sh(script: "kubectl get pod scenario-a -n monitoring -o jsonpath='{.status.phase}'", returnStdout: true).trim()
-                            return status == "Running"
-                        }
-                    }
-                }
+                sh 'kubectl apply -f scenarios/scenario-a.yaml'
             }
         }
-        stage('Check for Restarts') {
+
+        stage('Wait for Pod') {
             steps {
-                sh 'kubectl describe pod scenario-a -n monitoring > pod-status.txt'
-                archiveArtifacts artifacts: 'pod-status.txt'
+                sh '''
+                for i in {1..30}; do
+                  kubectl get pod scenario-a -o jsonpath="{.status.phase}" | grep -q Running && break
+                  sleep 2
+                done
+                '''
             }
         }
+
+        stage('Check Restarts') {
+            steps {
+                sh 'kubectl get pod scenario-a -o jsonpath="{.status.containerStatuses[0].restartCount}"'
+            }
+        }
+
         stage('End Timer & Log') {
             steps {
                 script {
-                    endTime = System.currentTimeMillis()
-                    duration = (endTime - startTime) / 1000
-                    echo "Pipeline Execution Time: ${duration} seconds"
+                    END_TIME = System.currentTimeMillis()
+                    def durationSeconds = (END_TIME.toLong() - START_TIME.toLong()) / 1000
+                    echo "⏱ Scenario A Total Time: ${durationSeconds} seconds"
                 }
             }
         }
