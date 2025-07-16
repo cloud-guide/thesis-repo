@@ -5,6 +5,9 @@ metadata:
   namespace: monitoring
   labels:
     app: scenario-a
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
 spec:
   containers:
     - name: nginx
