@@ -10,7 +10,7 @@ pipeline {
         stage('Start Timer') {
             steps {
                 script {
-                    START_TIME = System.currentTimeMillis()
+                    START_TIME = System.currentTimeMillis().toString()
                 }
             }
         }
@@ -41,8 +41,8 @@ pipeline {
         stage('End Timer & Log') {
             steps {
                 script {
-                    END_TIME = System.currentTimeMillis()
-                    def durationSeconds = (END_TIME as Long - START_TIME as Long) / 1000
+                    END_TIME = System.currentTimeMillis().toString()
+                    def durationSeconds = (END_TIME.toLong() - START_TIME.toLong()) / 1000
                     echo "⏱ Scenario A Total Time: ${durationSeconds} seconds"
                 }
             }
