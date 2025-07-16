@@ -17,7 +17,7 @@ pipeline {
 
         stage('Deploy Scenario A') {
             steps {
-                sh 'kubectl apply -f scenarios/scenario-a.yaml'
+                sh 'kubectl apply -f scenario/scenario-a.yaml'
             }
         }
 
