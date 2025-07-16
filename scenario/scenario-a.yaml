@@ -7,10 +7,25 @@ metadata:
     app: scenario-a
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port: "80"
+    prometheus.io/port: "9113"
 spec:
   containers:
     - name: nginx
       image: nginx:alpine
       ports:
         - containerPort: 80
+      volumeMounts:
+        - name: nginx-conf
+          mountPath: /etc/nginx/conf.d
+
+    - name: nginx-exporter
+      image: nginx/nginx-prometheus-exporter:0.11.0
+      args:
+        - -nginx.scrape-uri=http://localhost:80/stub_status
+      ports:
+        - containerPort: 9113
+
+  volumes:
+    - name: nginx-conf
+      configMap:
+        name: nginx-stub-status-conf
