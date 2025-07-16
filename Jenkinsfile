@@ -25,7 +25,7 @@ pipeline {
             steps {
                 sh '''
                 for i in {1..30}; do
-                  kubectl get pod scenario-a -o jsonpath="{.status.phase}" | grep -q Running && break
+                  kubectl get pod scenario-a -n monitoring -o jsonpath="{.status.phase}" | grep -q Running && break
                   sleep 2
                 done
                 '''
@@ -34,7 +34,7 @@ pipeline {
 
         stage('Check Restarts') {
             steps {
-                sh 'kubectl get pod scenario-a -o jsonpath="{.status.containerStatuses[0].restartCount}"'
+                sh 'kubectl get pod scenario-a -n monitoring -o jsonpath="{.status.containerStatuses[0].restartCount}"'
             }
         }
 
