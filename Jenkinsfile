@@ -8,11 +8,12 @@ pipeline {
                 }
             }
         }
-        stage('Deploy Scenario A') {
-            steps {
-                sh 'kubectl apply -f scenarios/scenario-a.yaml'
-            }
-        }
+stage('Deploy Scenario A') {
+    steps {
+        echo 'Run the following command manually:'
+        echo 'kubectl apply -f scenarios/scenario-a.yaml'
+    }
+}
         stage('Wait for Pod to be Running') {
             steps {
                 script {
