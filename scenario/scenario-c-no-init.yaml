@@ -28,18 +28,17 @@ spec:
       ports:
         - containerPort: 9113
 
-        - name: fail-container
+    - name: fail-container
       image: busybox
       command: ["sh", "-c"]
       args:
         - |
           echo "[fail-container] Starting crash loop...";
           while true; do
-            echo "Crashing now..."; 
-            sleep 1; 
-            false; 
+            echo "Crashing now...";
+            sleep 1;
+            false;
           done
-
 
   volumes:
     - name: nginx-conf
