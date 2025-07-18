@@ -6,8 +6,6 @@ pipeline {
     }
 
     environment {
-        START_TIME = ''
-        END_TIME = ''
         POD_NAME = "scenario-${params.SCENARIO}"
     }
 
@@ -15,7 +13,8 @@ pipeline {
         stage('Start Timer') {
             steps {
                 script {
-                    START_TIME = System.currentTimeMillis().toString()
+                    // Use script-scoped variables
+                    env.START_TIME_MS = System.currentTimeMillis().toString()
                 }
             }
         }
@@ -28,12 +27,23 @@ pipeline {
 
         stage('Wait for Pod') {
             steps {
-                sh '''
-                for i in {1..30}; do
-                  kubectl get pod $POD_NAME -n monitoring -o jsonpath="{.status.phase}" | grep -q Running && break
-                  sleep 2
-                done
-                '''
+                script {
+                    def maxTries = 30
+                    def waitSuccess = false
+
+                    for (int i = 0; i < maxTries; i++) {
+                        def status = sh(script: "kubectl get pod $POD_NAME -n monitoring -o jsonpath='{.status.phase}'", returnStdout: true).trim()
+                        if (status == "Running") {
+                            waitSuccess = true
+                            break
+                        }
+                        sleep 2
+                    }
+
+                    if (!waitSuccess) {
+                        error("Pod $POD_NAME did not reach Running state in time.")
+                    }
+                }
             }
         }
 
@@ -44,7 +54,13 @@ pipeline {
                     def pod = readJSON text: podJson
 
                     def scheduledTime = pod.status.startTime
-                    def containerStartTime = pod.status.containerStatuses[0].state.running.startedAt
+
+                    def containerState = pod.status.containerStatuses[0].state
+                    if (!containerState.running) {
+                        error("Container is not in running state yet.")
+                    }
+
+                    def containerStartTime = containerState.running.startedAt
 
                     def startupMillis = java.time.Instant.parse(containerStartTime).toEpochMilli() - java.time.Instant.parse(scheduledTime).toEpochMilli()
                     def startupSeconds = startupMillis / 1000
@@ -69,8 +85,9 @@ pipeline {
         stage('End Timer & Log') {
             steps {
                 script {
-                    END_TIME = System.currentTimeMillis().toString()
-                    def durationSeconds = (END_TIME.toLong() - START_TIME.toLong()) / 1000
+                    def endTime = System.currentTimeMillis()
+                    def startTime = env.START_TIME_MS.toLong()
+                    def durationSeconds = (endTime - startTime) / 1000
                     echo "⏱ Scenario ${params.SCENARIO.toUpperCase()} Total Pipeline Time: ${durationSeconds} seconds"
                 }
             }
