@@ -32,7 +32,11 @@ spec:
       image: busybox
       command: ["sh", "-c"]
       args:
-        - echo "[fail-container] Simulating failure..." && exit 1
+        - |
+          echo "[fail-container] Simulating repeated failure...";
+          while true; do
+            exit 1
+          done
 
   volumes:
     - name: nginx-conf
