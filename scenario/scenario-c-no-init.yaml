@@ -12,6 +12,9 @@ spec:
   containers:
     - name: nginx
       image: nginx:alpine
+      command: ["sh", "-c"]
+      args:
+        - echo "[nginx] Delaying startup by 5s..." && sleep 5 && nginx -g 'daemon off;'
       ports:
         - containerPort: 80
       volumeMounts:
