@@ -28,6 +28,12 @@ spec:
       ports:
         - containerPort: 9113
 
+    - name: fail-container
+      image: busybox
+      command: ["sh", "-c"]
+      args:
+        - echo "[fail-container] Simulating failure..." && exit 1
+
   volumes:
     - name: nginx-conf
       configMap:
